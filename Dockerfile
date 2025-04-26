@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code
 COPY . .
@@ -17,5 +17,6 @@ COPY . .
 EXPOSE 4000
 
 
-CMD ["npm", "start", "run"]
 
+# Start the application
+CMD ["npm", "run", "start"]

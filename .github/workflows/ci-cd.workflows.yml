@@ -14,20 +14,51 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
-            - name: login to docker hub
-              run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+            - name: Login to Docker Hub
+              uses: docker/login-action@v2
+              with:
+                  username: ${{ secrets.DOCKER_USERNAME }}
+                  password: ${{ secrets.DOCKER_PASSWORD }}
+
             - name: Build docker image
               run: docker build -t ansar41/graphql-node-js:latest .
+
             - name: Push docker image
               run: docker push ansar41/graphql-node-js:latest
 
-    deploy:
-        runs-on: [aws-ec2]
-        needs: build
-        steps:
-            - name: pull docker image
-              run: docker pull ansar41/graphql-node-js:latest
-            - name: Remove old docker container
-              run: docker rm -f graphql-node-js
-            - name: Run docker container
-              run: docker run -d --name graphql-node-js -p 4000:4000 ansar41/graphql-node-js:latest
+    # deploy:
+    #     runs-on: [aws-ec2]
+    #     needs: build
+    #     steps:
+    #         - name: Pull docker image
+    #           run: docker pull ansar41/graphql-node-js:latest
+
+    #         - name: Remove old docker container
+    #           run: docker rm -f graphql-node-js || true
+
+    #         - name: Run docker container with database connection
+    #           run: |
+    #               docker run -d --name graphql-node-js \
+    #                 -p 4000:4000 \
+    #                 -e DB_HOST=${{ secrets.DB_HOST }} \
+    #                 -e DB_PORT=${{ secrets.DB_PORT }} \
+    #                 -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+    #                 -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+    #                 -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
+    #                 -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+    #                 -e JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }} \
+    #                 --restart unless-stopped \
+    #                 ansar41/graphql-node-js:latest
+
+    #         - name: Verify deployment
+    #           run: |
+    #               echo "Waiting for application to start..."
+    #               sleep 10
+    #               if curl -s http://localhost:4000/graphql -o /dev/null; then
+    #                 echo "Application is running successfully"
+    #               else
+    #                 echo "Application failed to start properly"
+    #                 docker logs graphql-node-js
+    #                 exit 1
+    #               fi
