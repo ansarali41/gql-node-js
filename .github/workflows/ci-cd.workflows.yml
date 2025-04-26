@@ -1,0 +1,33 @@
+name: CICD
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+            - name: login to docker hub
+              run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            - name: Build docker image
+              run: docker build -t ansar41/graphql-node-js:latest .
+            - name: Push docker image
+              run: docker push ansar41/graphql-node-js:latest
+
+    deploy:
+        runs-on: [aws-ec2]
+        needs: build
+        steps:
+            - name: pull docker image
+              run: docker pull ansar41/graphql-node-js:latest
+            - name: Remove old docker container
+              run: docker rm -f graphql-node-js
+            - name: Run docker container
+              run: docker run -d --name graphql-node-js -p 4000:4000 ansar41/graphql-node-js:latest
